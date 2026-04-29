@@ -1,1 +1,251 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>دردشة بغداد</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css?v=live-neon-5" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+</head>
+<body>
+  <svg class="sprite" aria-hidden="true">
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2h9A3.5 3.5 0 0 1 20 5.5v6A3.5 3.5 0 0 1 16.5 15H12l-5.2 4.2A1.1 1.1 0 0 1 5 18.4V15A3 3 0 0 1 2 12V5.5Z"/><path d="M8 7h8M8 11h5"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 22s7-6.1 7-13A7 7 0 1 0 5 9c0 6.9 7 13 7 13Z"/><circle cx="12" cy="9" r="2.4"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-14.5 4.7"/><path d="M4 12A8 8 0 0 1 18.5 7.3"/><path d="M18.5 3v4h-4"/><path d="M5.5 21v-4h4"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/><path d="M12 14v3"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-house" viewBox="0 0 24 24"><path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></symbol>
+    <symbol id="i-exit" viewBox="0 0 24 24"><path d="M10 4H5v16h5"/><path d="M15 17l5-5-5-5"/><path d="M20 12H9"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M5 7h3l2-3h4l2 3h3a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3v-7a3 3 0 0 1 3-3Z"/><circle cx="12" cy="14" r="4"/></symbol>
+  </svg>
 
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-bg-orb one"></div><div class="auth-bg-orb two"></div>
+    <section class="auth-card">
+      <div class="brand-block">
+        <div class="brand-icon"><svg><use href="#i-chat"/></svg></div>
+        <h1>دردشة بغداد</h1>
+        <p>خريطة تفاعلية حية للدردشات والكتابات داخل بغداد</p>
+      </div>
+      <div class="auth-tabs">
+        <button id="loginTab" class="active">دخول</button>
+        <button id="registerTab">إنشاء حساب</button>
+      </div>
+
+      <form id="loginForm" class="form-stack">
+        <label>اسم المستخدم<input id="loginUsername" autocomplete="username" required /></label>
+        <label>كلمة المرور<input id="loginPassword" type="password" autocomplete="current-password" required /></label>
+        <button class="btn primary full" type="submit">دخول للجهاز الحالي</button>
+        <button id="resetStoredBtn" class="btn ghost full danger reset-device" type="button">حذف الحساب المخزن سابقاً لإنشاء حساب جديد</button>
+      </form>
+
+      <form id="registerForm" class="form-stack hidden">
+        <div class="avatar-loader" id="avatarLoader">
+          <input id="avatarInput" type="file" accept="image/*" hidden />
+          <button type="button" id="avatarPick" class="avatar-pick"><svg><use href="#i-camera"/></svg><span>رفع الصورة الشخصية إلزامي</span></button>
+          <img id="avatarPreview" alt="avatar preview" class="hidden" />
+        </div>
+        <label>اسم المستخدم<input id="regUsername" required /></label>
+        <label>رقم الهاتف<input id="regPhone" placeholder="اختياري" /></label>
+        <label>العنوان<input id="regAddress" placeholder="اختياري" /></label>
+        <label>معلومات إضافية<textarea id="regBio" rows="3" placeholder="أي شيء تريد إظهاره في البروفايل"></textarea></label>
+        <label>كلمة المرور<input id="regPassword" type="password" required minlength="6" /></label>
+        <div class="device-note">كل جهاز يسمح بحساب واحد فقط حسب معرف الجهاز المحفوظ.</div>
+        <button class="btn success full" type="submit">إنشاء حساب واحد لهذا الجهاز</button>
+      </form>
+      <div class="auth-desktop-note">يفضل الدخول من الحاسبة لصورة متكاملة وواجهة أوسع.</div>
+    </section>
+  </div>
+
+  <div id="appScreen" class="app-screen hidden">
+    <header class="topbar">
+      <div class="top-brand">
+        <div class="mini-logo"><svg><use href="#i-chat"/></svg></div>
+        <div><h1>دردشة بغداد</h1><span>بث حي للخريطة + دردشات + كتابات فوق البيوت</span></div>
+      </div>
+      <div class="top-user" id="meProfileBtn">
+        <img id="meAvatar" alt="me" />
+        <div><b id="meName">-</b><small>ملفي الشخصي</small></div>
+      </div>
+      <div class="top-actions">
+        <button id="notificationsBtn" class="btn ghost thin neon-count">🔔 الاشعارات <b id="notificationsCount">0</b></button>
+        <button id="directMessagesBtn" class="btn ghost thin neon-count">✉️ الرسائل <b id="dmCount">0</b></button>
+        <button id="settingsBtn" class="btn ghost thin">الإعدادات</button>
+        <button id="logoutBtn" class="btn ghost thin danger"><svg><use href="#i-exit"/></svg> خروج</button>
+      </div>
+    </header>
+
+
+    <main class="workspace">
+      <section class="map-hero">
+        <div id="map"></div>
+        <div class="map-live-mask" id="mapLiveMask">
+          <span class="cloud c1"></span><span class="cloud c2"></span><span class="cloud c3"></span>
+          <span class="scanline"></span>
+        </div>
+        <div class="map-status">
+          <span class="live-dot"></span>
+          <b>LIVE BAGHDAD</b>
+          <small id="dayNightText">نهار حي</small>
+        </div>
+        <div class="map-action-hub">
+          <button id="refreshBtn" class="hub-btn cyan"><svg><use href="#i-refresh"/></svg> تحديث</button>
+          <button id="cityPeopleBtn" class="hub-btn people">👥 تعرف على اهالي المدينة</button>
+          <button id="locateBtn" class="hub-btn green"><svg><use href="#i-pin"/></svg> موقعي</button>
+          <button id="createGroupBtn" class="hub-btn violet"><svg><use href="#i-chat"/></svg> انشاء دردشة</button>
+          <button id="createCaptionBtn" class="hub-btn amber"><svg><use href="#i-house"/></svg> اكتب فوق البيوت</button>
+          <button id="createSecureBtn" class="hub-btn red"><svg><use href="#i-lock"/></svg> دردشة فائقة التشفير</button>
+        </div>
+        <div class="map-tip" id="mapTip">اسمح بتحديد الموقع، أو اضغط على الخريطة لاختيار مكان الدردشة.</div>
+      </section>
+
+      <section class="stats-row">
+        <div class="stat-card"><b id="statGroups">0</b><span>الدردشات</span></div>
+        <div class="stat-card"><b id="statCaptions">0</b><span>الكتابات</span></div>
+        <div class="stat-card"><b id="statPrivate">0</b><span>الخاصة</span></div>
+        <div class="stat-card"><b id="statLive">حي</b><span>حالة الخريطة</span></div>
+      </section>
+
+      <section class="content-grid">
+        <aside class="panel glass-panel list-panel">
+          <div class="panel-head"><h2>الدردشات على الخريطة</h2><span id="listBadge">0</span></div>
+          <div id="groupList" class="item-list"></div>
+          <div class="panel-head secondary"><h2>كتابات فوق البيوت</h2><span id="captionBadge">0</span></div>
+          <div id="captionList" class="item-list captions"></div>
+        </aside>
+
+        <section class="panel glass-panel chat-panel">
+          <div id="emptyChat" class="empty-state"><h2>اختر دردشة من الخريطة أو من القائمة</h2><p>بعد الاختيار تظهر الرسائل، الغلاف، الأعضاء، والطلبات هنا بدون أن تصغر الخريطة أو المعلومات.</p></div>
+          <div id="chatBox" class="hidden chat-shell">
+            <div id="chatCover" class="chat-cover"><div><b id="chatTitle">-</b><span id="chatMeta">-</span></div><button id="uploadCoverBtn" class="btn ghost thin">رفع غلاف</button><input id="coverInput" type="file" accept="image/*" hidden /></div>
+            <div class="chips"><span id="chatDistrictChip"></span><span id="chatTypeChip"></span><span id="chatLifeChip"></span><span id="countdownText"></span></div>
+            <div id="ownerRequests" class="owner-requests hidden"></div>
+            <button id="joinBtn" class="btn primary hidden">دخول الدردشة</button>
+            <div id="messages" class="messages"></div>
+            <form id="messageForm" class="message-form hidden"><input id="messageInput" placeholder="اكتب رسالة..." /><button class="btn primary" type="submit">إرسال</button></form>
+          </div>
+        </section>
+
+        <aside class="panel glass-panel info-panel">
+          <div class="panel-head"><h2>تفاصيل جانبية</h2></div>
+          <div class="info-card">
+            <div class="info-row"><span>اسم الدردشة</span><b id="infoName">-</b></div>
+            <div class="info-row"><span>النوع</span><b id="infoPrivacy">-</b></div>
+            <div class="info-row"><span>المدة</span><b id="infoLife">-</b></div>
+            <div class="info-row"><span>المنطقة</span><b id="infoDistrict">-</b></div>
+            <div class="info-row"><span>المالك</span><b id="infoOwner">-</b></div>
+            <div class="info-row"><span>الأعضاء</span><b id="infoMembers">-</b></div>
+          </div>
+          <div id="emptyCaption" class="empty-state small"><h3>اختر كتابة فوق البيوت</h3></div>
+          <div id="captionBox" class="caption-box hidden">
+            <h3 id="captionTitle">-</h3><p id="captionMeta">-</p><div id="captionBody" class="caption-body"></div>
+            <div id="captionComments" class="caption-comments"></div>
+            <form id="captionCommentForm" class="message-form"><input id="captionCommentInput" placeholder="رد على الكتابة..." /><button class="btn secondary" type="submit">إضافة تعليق</button></form>
+          </div>
+        </aside>
+      </section>
+    </main>
+    <footer class="site-footer-note">
+      <b>الموقع سيتعرض للترقية المستمرة بإضافة مميزات أحدث</b>
+      <span>بيجنا: <a href="https://www.instagram.com/iraq_project/" target="_blank" rel="noopener noreferrer">https://www.instagram.com/iraq_project/</a></span>
+    </footer>
+  </div>
+
+  <dialog id="groupDialog" class="neo-dialog">
+    <form id="groupForm" method="dialog" class="dialog-form">
+      <h2>انشاء دردشة</h2>
+      <label>اسم الدردشة<input id="groupName" required /></label>
+      <div class="two-col">
+        <label>الخصوصية<select id="groupPrivacy"><option value="public">عامة</option><option value="private">خاصة بطلب دخول</option></select></label>
+        <label>المدة<select id="groupLifetime"><option value="permanent">دردشة دائمة</option><option value="temp24">دردشة مؤقتة 24 ساعة</option></select></label>
+      </div>
+      <p class="dialog-note" id="groupPointText">اختر الموقع بدقة من الخريطة حتى يثبت الدبوس فوق البيت أو الشارع المطلوب.</p>
+      <div class="dialog-actions"><button class="btn ghost" value="cancel" type="button" data-close>إلغاء</button><button class="btn primary" type="submit">إنشاء</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="captionDialog" class="neo-dialog">
+    <form id="captionForm" method="dialog" class="dialog-form">
+      <h2>اكتب فوق البيوت</h2>
+      <label>العنوان<input id="captionTitleInput" required /></label>
+      <label>النص<textarea id="captionText" rows="4" required></textarea></label>
+      <p class="dialog-note" id="captionPointText">اختر الموقع بدقة من الخريطة حتى تثبت الكتابة فوق البيت أو المبنى المطلوب.</p>
+      <div class="dialog-actions"><button class="btn ghost" value="cancel" type="button" data-close>إلغاء</button><button class="btn secondary" type="submit">نشر</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="secureDialog" class="neo-dialog secure-create-dialog">
+    <form id="secureCreateForm" method="dialog" class="dialog-form dark-form">
+      <h2>دردشة فائقة التشفير</h2>
+      <p>تنشئ رابط خاص تشاركه فقط مع شخص أو مجموعة. أي شخص يدخل من الرابط يظهر داخل الدردشة المشفرة.</p>
+      <label>اسم الدردشة<input id="secureTitle" placeholder="مثلاً: اجتماع خاص" /></label>
+      <div id="secureLinkBox" class="secure-link-box hidden"><span id="secureLinkText"></span><button id="copySecureLink" class="btn primary" type="button">نسخ الرابط</button></div>
+      <div class="dialog-actions"><button class="btn ghost" value="cancel" type="button" data-close>إغلاق</button><button id="secureCreateSubmit" class="btn danger-neon" type="submit">إنشاء رابط مشفر</button></div>
+    </form>
+  </dialog>
+
+  <div id="secureRoom" class="secure-room hidden">
+    <div class="secure-shell">
+      <aside class="secure-side">
+        <div class="secure-title"><svg><use href="#i-lock"/></svg><div><h2 id="secureRoomTitle">-</h2><span>صفحة سوداء مؤقتة، تنتهي عند الخروج أو حذف المالك</span></div></div>
+        <div class="secure-link-line"><span id="secureRoomLink">-</span><button id="copyOpenSecureLink" class="btn primary thin">نسخ</button></div>
+        <h3>الأشخاص الموجودون</h3>
+        <div id="secureMembers" class="secure-members"></div>
+        <button id="secureExitBtn" class="btn danger-neon full">إنهاء وخروج</button>
+      </aside>
+      <section class="secure-chat">
+        <div class="secure-radar"><span></span><span></span><span></span></div>
+        <div id="secureMessages" class="secure-messages"></div>
+        <form id="secureMessageForm" class="secure-message-form"><input id="secureMessageInput" placeholder="رسالة مشفرة..." /><button class="btn danger-neon" type="submit">إرسال</button></form>
+      </section>
+    </div>
+  </div>
+
+  <dialog id="profileDialog" class="profile-dialog">
+    <div class="profile-card">
+      <img id="profileAvatar" alt="profile" />
+      <h2 id="profileName">-</h2>
+      <div class="profile-lines"><p><b>الرقم:</b> <span id="profilePhone">-</span></p><p><b>العنوان:</b> <span id="profileAddress">-</span></p><p><b>معلومات:</b> <span id="profileBio">-</span></p><p><b>الموقع:</b> <span id="profileLocation">-</span></p></div>
+      <div class="profile-actions">
+        <button id="profileSendMsgBtn" class="btn primary full" type="button">إرسال رسالة</button>
+        <button id="profileShareChatBtn" class="btn secondary full" type="button">مشاركة الدردشة الحالية</button>
+      </div>
+      <button class="btn ghost full" data-close-profile>إغلاق</button>
+    </div>
+  </dialog>
+
+
+  <dialog id="notificationsDialog" class="neo-dialog list-dialog">
+    <div class="dialog-form">
+      <h2>الاشعارات</h2>
+      <div id="notificationsList" class="modal-list"></div>
+      <div class="dialog-actions"><button class="btn ghost" type="button" data-close>إغلاق</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="directMessagesDialog" class="neo-dialog list-dialog">
+    <div class="dialog-form">
+      <h2>الرسائل الخاصة</h2>
+      <div id="directMessagesList" class="modal-list"></div>
+      <div class="dialog-actions"><button class="btn ghost" type="button" data-close>إغلاق</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="directMessageDialog" class="neo-dialog">
+    <form id="directMessageForm" method="dialog" class="dialog-form">
+      <h2>إرسال رسالة خاصة</h2>
+      <p id="directTargetName" class="dialog-note">-</p>
+      <textarea id="directMessageText" rows="4" placeholder="اكتب الرسالة أو شارك الدردشة هنا..." required></textarea>
+      <input id="directTargetId" type="hidden" />
+      <input id="directShareGroupId" type="hidden" />
+      <div class="dialog-actions"><button class="btn ghost" value="cancel" type="button" data-close>إلغاء</button><button class="btn primary" type="submit">إرسال</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js?v=live-neon-5"></script>
+</body>
+</html>
